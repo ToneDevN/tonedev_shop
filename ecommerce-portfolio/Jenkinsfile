@@ -1,0 +1,167 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME        = 'ecommerce-portfolio'
+        DOCKER_IMAGE    = "tonedev/${APP_NAME}"
+        DOCKER_TAG      = "${BUILD_NUMBER}"
+        DOCKER_REGISTRY = 'docker.io'           // เปลี่ยนเป็น registry ของคุณ
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        // ─────────────────────────────────────────────────────────────
+        // Stage 1 — Checkout
+        // ─────────────────────────────────────────────────────────────
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "Branch: ${env.GIT_BRANCH} | Commit: ${env.GIT_COMMIT?.take(8)}"
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Stage 2 — Install PHP dependencies (Composer)
+        // ─────────────────────────────────────────────────────────────
+        stage('Install Dependencies') {
+            parallel {
+                stage('Composer Install') {
+                    steps {
+                        sh '''
+                            composer install \
+                                --no-interaction \
+                                --prefer-dist \
+                                --optimize-autoloader
+                        '''
+                    }
+                }
+                stage('NPM Install') {
+                    steps {
+                        sh 'npm ci --prefer-offline'
+                    }
+                }
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Stage 3 — Prepare Environment
+        // ─────────────────────────────────────────────────────────────
+        stage('Prepare Environment') {
+            steps {
+                withCredentials([file(credentialsId: 'ecommerce-env-file', variable: 'ENV_FILE')]) {
+                    sh '''
+                        cp "$ENV_FILE" .env
+                        php artisan key:generate --force
+                    '''
+                }
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Stage 4 — Build Frontend Assets
+        // ─────────────────────────────────────────────────────────────
+        stage('Build Assets') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Stage 5 — Run Tests
+        // ─────────────────────────────────────────────────────────────
+        stage('Test') {
+            steps {
+                sh '''
+                    php artisan config:clear
+                    php artisan test --parallel --coverage-clover=coverage.xml
+                '''
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'storage/logs/junit*.xml'
+                    clover cloverReportDir: '.', cloverReportFileName: 'coverage.xml'
+                }
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Stage 6 — Docker Build & Push
+        // ─────────────────────────────────────────────────────────────
+        stage('Docker Build') {
+            steps {
+                script {
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-hub-credentials') {
+                        def image = docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}", "--target production .")
+
+                        image.push()
+                        image.push('latest')
+
+                        echo "Pushed: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    }
+                }
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Stage 7 — Deploy (Production)
+        //   เฉพาะ branch main หรือ master เท่านั้น
+        // ─────────────────────────────────────────────────────────────
+        stage('Deploy') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'master'
+                }
+            }
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'deploy-server-ssh',
+                    keyFileVariable:  'SSH_KEY',
+                    usernameVariable: 'SSH_USER'
+                )]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no \
+                            -i "\$SSH_KEY" \
+                            "\$SSH_USER@\${DEPLOY_HOST}" '
+                                cd /opt/ecommerce-portfolio && \\
+                                docker compose pull && \\
+                                docker compose up -d --remove-orphans && \\
+                                docker compose exec -T app php artisan migrate --force && \\
+                                docker compose exec -T app php artisan config:cache && \\
+                                docker compose exec -T app php artisan route:cache && \\
+                                docker compose exec -T app php artisan view:cache
+                            '
+                    """
+                }
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Post — Notifications & Cleanup
+    // ─────────────────────────────────────────────────────────────
+    post {
+        success {
+            echo "✅ Build #${BUILD_NUMBER} succeeded!"
+            // Uncomment เพื่อส่ง Slack notification:
+            // slackSend channel: '#deploys', color: 'good',
+            //   message: "✅ *${APP_NAME}* build #${BUILD_NUMBER} deployed successfully."
+        }
+        failure {
+            echo "❌ Build #${BUILD_NUMBER} failed."
+            // slackSend channel: '#deploys', color: 'danger',
+            //   message: "❌ *${APP_NAME}* build #${BUILD_NUMBER} failed. <${BUILD_URL}|View logs>"
+        }
+        always {
+            // ล้าง Docker image เก่าในเครื่อง Jenkins เพื่อประหยัด disk
+            sh "docker image prune -f --filter 'until=24h' || true"
+            cleanWs()
+        }
+    }
+}
