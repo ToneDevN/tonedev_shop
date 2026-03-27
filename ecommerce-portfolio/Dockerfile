@@ -1,57 +1,96 @@
-FROM php:8.3-fpm
+# ============================================================
+# Stage 1: Node — Build frontend assets (Vite + TailwindCSS)
+# ============================================================
+FROM node:20-alpine AS node-builder
 
-# Copy composer.lock and composer.json
-COPY composer.lock composer.json /var/www/
+WORKDIR /app
 
-# Set working directory
-WORKDIR /var/www
+COPY package.json package-lock.json ./
+RUN npm ci --prefer-offline
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpng-dev \
-    libpq-dev \
-    libonig-dev \
-    libzip-dev \
-    zlib1g-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    locales \
-    zip \
-    jpegoptim optipng pngquant gifsicle \
-    vim \
-    unzip \
-    git \
-    curl \
-    nodejs \
-    npm \
-    && rm -rf /var/lib/apt/lists/*
+COPY vite.config.js tailwind.config.js postcss.config.js ./
+COPY resources/ resources/
+COPY public/ public/
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN npm run build
 
-# Install extensions
-RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl
-RUN docker-php-ext-configure gd \
-    --with-freetype \
-    --with-jpeg
-RUN docker-php-ext-install gd
+# ============================================================
+# Stage 2: Composer — Install PHP dependencies
+# ============================================================
+FROM composer:2.8 AS composer-builder
 
-RUN docker-php-ext-install pdo pdo_pgsql
+WORKDIR /app
 
-# Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-autoloader \
+    --prefer-dist \
+    --ignore-platform-reqs
 
-# Add user for Laravel application
-RUN groupadd -g 1000 www
-RUN useradd -u 1000 -ms /bin/bash -g www www
+COPY . .
+RUN composer dump-autoload --optimize --no-dev
 
-# Copy application files and set ownership
-COPY --chown=www:www . /var/www
+# ============================================================
+# Stage 3: Production image
+# ============================================================
+FROM php:8.2-fpm-alpine AS production
 
-# Change current user to www
-USER www
+LABEL maintainer="ToneDev"
+LABEL description="E-Commerce Portfolio — Laravel 12"
 
-# Expose port 9000 and start php-fpm server
-EXPOSE 9000
-CMD ["php-fpm"]
+# Install system dependencies & PHP extensions
+RUN apk add --no-cache \
+        nginx \
+        supervisor \
+        sqlite \
+        sqlite-dev \
+        libpng \
+        libpng-dev \
+        libjpeg-turbo \
+        libjpeg-turbo-dev \
+        libwebp \
+        libwebp-dev \
+        freetype \
+        freetype-dev \
+        oniguruma-dev \
+        zip \
+        unzip \
+        curl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install \
+        pdo \
+        pdo_sqlite \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        opcache \
+    && apk del libpng-dev libjpeg-turbo-dev libwebp-dev freetype-dev \
+    && rm -rf /var/cache/apk/*
+
+WORKDIR /var/www/html
+
+# Copy application files from previous stages
+COPY --from=composer-builder --chown=www-data:www-data /app .
+COPY --from=node-builder      --chown=www-data:www-data /app/public/build public/build/
+
+# Copy configuration files
+COPY docker/nginx/default.conf    /etc/nginx/http.d/default.conf
+COPY docker/supervisor/supervisord.conf /etc/supervisord.conf
+COPY docker/php/php.ini           $PHP_INI_DIR/conf.d/custom.ini
+COPY docker/entrypoint.sh         /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh \
+    && mkdir -p storage/framework/{cache,sessions,views} \
+               storage/logs \
+               bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+EXPOSE 80
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
