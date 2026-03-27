@@ -1,115 +1,73 @@
 services:
-  # ─────────────────────────────────────────
-  # Application (Laravel + Nginx + PHP-FPM)
-  # ─────────────────────────────────────────
+
+  # PHP Service
   app:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
-    image: ecommerce-portfolio:latest
-    container_name: ecommerce_app
+    image: digitalocean.com/php
+    container_name: app
     restart: unless-stopped
+    tty: true
     environment:
-      APP_NAME: "E-Commerce Portfolio"
-      APP_ENV: production
-      APP_DEBUG: "false"
-      APP_URL: http://localhost
-      APP_KEY: ${APP_KEY}
-      # Database
-      DB_CONNECTION: sqlite
-      DB_DATABASE: /var/www/html/database/database.sqlite
-      # Session / Cache / Queue
-      SESSION_DRIVER: database
-      QUEUE_CONNECTION: database
-      CACHE_STORE: database
-      # Logging
-      LOG_CHANNEL: stack
-      LOG_LEVEL: warning
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
     volumes:
-      # Persist SQLite database
-      - db_data:/var/www/html/database
-      # Persist uploaded files
-      - storage_data:/var/www/html/storage/app
-      # Persist logs
-      - log_data:/var/www/html/storage/logs
+      - ./:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  # Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
+    restart: unless-stopped
+    tty: true
     ports:
-      - "${APP_PORT:-8080}:80"
-    networks:
-      - ecommerce_net
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost/up" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
-  # ─────────────────────────────────────────
-  # Queue Worker (artisan queue:work)
-  # ─────────────────────────────────────────
-  queue:
-    image: ecommerce-portfolio:latest
-    container_name: ecommerce_queue
-    restart: unless-stopped
-    command: [ "php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600" ]
-    environment:
-      APP_ENV: production
-      APP_KEY: ${APP_KEY}
-      DB_CONNECTION: sqlite
-      DB_DATABASE: /var/www/html/database/database.sqlite
-      QUEUE_CONNECTION: database
-      LOG_CHANNEL: stack
+      - "8082:80"
+      - "5173:5173"
     volumes:
-      - db_data:/var/www/html/database
-      - storage_data:/var/www/html/storage/app
-      - log_data:/var/www/html/storage/logs
-    depends_on:
-      app:
-        condition: service_healthy
+      - ./:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
     networks:
-      - ecommerce_net
+      - app-network
 
-  # ─────────────────────────────────────────
-  # Schedule Runner (artisan schedule:run)
-  # ─────────────────────────────────────────
-  scheduler:
-    image: ecommerce-portfolio:latest
-    container_name: ecommerce_scheduler
+  # Postgres Database Service
+  db:
+    image: postgres:18-alpine
+    container_name: db
     restart: unless-stopped
-    # runs every minute like a cron
-    command: >
-      sh -c "while true; do
-        php artisan schedule:run >> /dev/null 2>&1;
-        sleep 60;
-      done"
     environment:
-      APP_ENV: production
-      APP_KEY: ${APP_KEY}
-      DB_CONNECTION: sqlite
-      DB_DATABASE: /var/www/html/database/database.sqlite
+      POSTGRES_DB: laravel_db
+      POSTGRES_USER: sail
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
     volumes:
-      - db_data:/var/www/html/database
-      - log_data:/var/www/html/storage/logs
-    depends_on:
-      app:
-        condition: service_healthy
+      - postgres_data:/var/lib/postgresql
     networks:
-      - ecommerce_net
+      - app-network
 
-# ─────────────────────────────────────────
-# Named Volumes
-# ─────────────────────────────────────────
-volumes:
-  db_data:
-    driver: local
-  storage_data:
-    driver: local
-  log_data:
-    driver: local
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_dashboard
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-user@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-adminpassword}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8888:80"
+    networks:
+      - app-network
 
-# ─────────────────────────────────────────
-# Network
-# ─────────────────────────────────────────
+# Docker Networks
 networks:
-  ecommerce_net:
+  app-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:
