@@ -1,0 +1,33 @@
+# Dependencies
+vendor/
+node_modules/
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Tests & dev tools
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# Build artifacts & IDE
+.idea/
+.vscode/
+*.log
+storage/logs/*.log
+public/hot
+
+# Symlinks (recreated at runtime by entrypoint.sh)
+public/storage
