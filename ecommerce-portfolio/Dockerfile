@@ -62,8 +62,7 @@ RUN apk add --no-cache \
     libzip \
     freetype \
     libjpeg-turbo \
-    bash \
-    su-exec
+    bash
 
 # Copy PHP extensions compiled in builder stage
 COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
@@ -76,9 +75,11 @@ RUN addgroup -g 1000 www && \
 # Copy application (from builder — includes vendor, public/build)
 COPY --from=builder --chown=www:www /var/www /var/www
 
-# Copy entrypoint (runs as root to fix permissions, then drops to www)
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+# Copy entrypoint
+COPY --chown=www:www docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+USER www
 
 EXPOSE 9000
 
