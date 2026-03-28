@@ -1,0 +1,50 @@
+services:
+
+  # PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: tonedev/ecommerce-portfolio:latest
+    container_name: app
+    restart: always
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: prod
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: ${DB_CONNECTION}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    working_dir: /var/www
+    volumes:
+      - ./storage:/var/www/storage
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  # Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
+    restart: always
+    tty: true
+    ports:
+      - "8001:80"
+    volumes:
+      - ./:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx/ssl/:/etc/nginx/ssl/
+    networks:
+      - app-network
+    depends_on:
+      - app
+
+# Docker Networks
+networks:
+  app-network:
+    driver: bridge
