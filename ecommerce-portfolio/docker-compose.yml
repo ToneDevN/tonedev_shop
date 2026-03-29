@@ -52,6 +52,8 @@ services:
       - ./nginx/conf.d/:/etc/nginx/conf.d/
     networks:
       - app-network
+    depends_on:
+      - app # บังคับให้เริ่ม app ก่อน nginx
 
   # Postgres Database Service
   db:
