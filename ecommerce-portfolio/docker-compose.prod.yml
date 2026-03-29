@@ -22,6 +22,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
     working_dir: /var/www
     volumes:
+      - ./.env:/var/www/.env
       - laravel_storage:/var/www/storage
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
@@ -50,6 +51,8 @@ services:
     tty: true
     ports:
       - "8001:80"
+    environment:
+      NGINX_ENTRYPOINT_QUIET_LOGS: "1"
     volumes:
       - ./:/var/www
       - ./nginx/conf.d/:/etc/nginx/conf.d/
