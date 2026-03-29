@@ -68,23 +68,22 @@ RUN apk add --no-cache \
 COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
 COPY --from=builder /usr/local/etc/php/conf.d/    /usr/local/etc/php/conf.d/
 
-# Add non-root user (Alpine uses addgroup/adduser)
-RUN addgroup -g 1000 www && \
-    adduser -u 1000 -s /bin/bash -G www -D www
-
 # Copy application (from builder — includes vendor, public/build)
-COPY --from=builder --chown=www:www /var/www /var/www
+COPY --from=builder --chown=www-data:www-data /var/www /var/www
 
 # Copy entrypoint
-COPY --chown=www:www docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chown=www-data:www-data docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+<<<<<<< HEAD
 # Remove user/group from www.conf to suppress FPM warnings when running as non-root
 RUN sed -i 's/^user =/;user =/' /usr/local/etc/php-fpm.d/www.conf && \
     sed -i 's/^group =/;group =/' /usr/local/etc/php-fpm.d/www.conf
 
 USER www
 
+=======
+>>>>>>> 6e8c6315118d0ebfb74126370231e5aad9e37734
 EXPOSE 9000
 
 ENTRYPOINT ["entrypoint.sh"]

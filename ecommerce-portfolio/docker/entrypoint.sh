@@ -5,8 +5,9 @@ set -e
 # Docker Entrypoint for Laravel (PostgreSQL)
 # ──────────────────────────────────────────────────────────────────
 
-# Fix storage permissions (needed when using named/bind volumes)
+# Fix permissions on everything because Docker volumes mount as root initially
 echo "→ Setting storage permissions..."
+chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
 chmod -R 775 /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
 
 # Run migrations

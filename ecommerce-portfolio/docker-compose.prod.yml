@@ -9,6 +9,8 @@ services:
     image: tonedev/ecommerce-portfolio:latest
     container_name: app
     restart: always
+    env_file:
+      - .env
     environment:
       SERVICE_NAME: app
       SERVICE_TAGS: prod
@@ -22,16 +24,21 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
     working_dir: /var/www
     volumes:
+<<<<<<< HEAD
       - ./.env:/var/www/.env
+=======
+      - ./:/var/www
+>>>>>>> 6e8c6315118d0ebfb74126370231e5aad9e37734
       - laravel_storage:/var/www/storage
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
       - app-network
     depends_on:
-      - db
+      db:
+        condition: service_healthy
   # PostgreSQL Standalone สำหรับ Laravel
   db:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     container_name: laravel_db_standalone
     restart: unless-stopped
     environment:
@@ -39,9 +46,14 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     networks:
       - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # Nginx Service
   webserver:
