@@ -75,6 +75,15 @@ COPY --from=builder --chown=www-data:www-data /var/www /var/www
 COPY --chown=www-data:www-data docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+<<<<<<< HEAD
+# Remove user/group from www.conf to suppress FPM warnings when running as non-root
+RUN sed -i 's/^user =/;user =/' /usr/local/etc/php-fpm.d/www.conf && \
+    sed -i 's/^group =/;group =/' /usr/local/etc/php-fpm.d/www.conf
+
+USER www
+
+=======
+>>>>>>> 6e8c6315118d0ebfb74126370231e5aad9e37734
 EXPOSE 9000
 
 ENTRYPOINT ["entrypoint.sh"]
