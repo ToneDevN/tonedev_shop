@@ -44,8 +44,12 @@
                 <div class="relative h-52 bg-gray-50 overflow-hidden">
                     @if($product->coverImage)
                         <img
-                            src="{{ $product->coverImage->image_path ?? 'https://via.placeholder.com/400x300' }}"
+                            src="{{ $product->coverImage->image_path }}"
                             alt="{{ $product->name }}"
+                            loading="lazy"
+                            decoding="async"
+                            width="400"
+                            height="208"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         >
                     @else
