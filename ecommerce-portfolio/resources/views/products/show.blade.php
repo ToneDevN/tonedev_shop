@@ -103,7 +103,7 @@
                                     @forelse($product->reviews as $review)
                                     <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
                                         <div class="flex items-center justify-between mb-2">
-                                            <span class="font-semibold">{{ $review->user->name }}</span>
+                                            <span class="font-semibold">{{ $review->user->full_name }}</span>
                                             <span class="text-xs text-gray-500">{{ $review->created_at->diffForHumans() }}</span>
                                         </div>
                                         <div class="flex text-yellow-400 mb-2">

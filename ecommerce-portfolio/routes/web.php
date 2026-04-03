@@ -29,7 +29,7 @@ Route::get('/track-order', function() {
 Route::post('/track-order', [App\Http\Controllers\OrderController::class, 'track'])->name('orders.track.search');
 
 // Owner Routes
-Route::prefix('owner')->name('owner.')->group(function () {
+Route::prefix('owner')->name('owner.')->middleware(['jwt.auth', 'role:owner,admin'])->group(function () {
     Route::get('/', [OwnerDashboardController::class, 'index'])->name('dashboard');
     Route::post('/products/create', [OwnerProductController::class,'create'])->name('products.create');
     Route::get('/orders', [OwnerOrderController::class, 'index'])->name('orders.index');
