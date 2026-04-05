@@ -39,7 +39,7 @@ class ProductController extends Controller
             // 3. บันทึกรูปภาพ
             if ($request->hasFile('image')) {
                 $path = $request->file('image')->store('products', 'public');
-                $product->images()->create([
+                $product->product_images()->create([
                     'image_path' => '/storage/' . $path,
                     'is_primary' => true,
                 ]);

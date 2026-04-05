@@ -20,6 +20,31 @@
         @yield('content')
     </main>
 
+    {{-- ─── Toast ───────────────────────────────────────────────────── --}}
+    <x-toast />
+
+    {{-- ─── Global Axios 401 interceptor ─────────────────────────── --}}
+    <script>
+    (function () {
+        if (typeof axios === 'undefined') return;
+
+        axios.interceptors.response.use(
+            response => response,
+            error => {
+                if (error.response && error.response.status === 401) {
+                    // เก็บ URL ปัจจุบันเพื่อกลับมาหลัง login (เฉพาะ path เพื่อป้องกัน open redirect)
+                    const intended = encodeURIComponent(window.location.pathname + window.location.search);
+                    // หลีกเลี่ยง redirect loop เมื่ออยู่ที่หน้า login อยู่แล้ว
+                    if (!window.location.pathname.startsWith('/login')) {
+                        window.location.href = '{{ route('login') }}?redirect=' + intended;
+                    }
+                }
+                return Promise.reject(error);
+            }
+        );
+    })();
+    </script>
+
     {{-- ─── Footer ──────────────────────────────────────────────────── --}}
     <footer class="bg-gray-950 text-gray-400 mt-0">
 
@@ -107,5 +132,6 @@
 
     </footer>
 
+    @stack('scripts')
 </body>
 </html>

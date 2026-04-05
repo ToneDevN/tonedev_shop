@@ -456,7 +456,7 @@ class ProductCategorySeeder extends Seeder
             }
 
             // สร้างรูปภาพ (ถ้ายังไม่มี)
-            if ($product->images()->count() === 0) {
+            if ($product->product_images()->count() === 0) {
                 foreach ($data['images'] as $i => $seed) {
                     ProductImage::create([
                         'product_id' => $product->id,

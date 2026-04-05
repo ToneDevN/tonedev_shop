@@ -26,17 +26,45 @@
                         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                             <div class="md:flex">
                                 
-                                <div class="md:w-1/2 p-4" x-data="{ activeImage: '{{ $product->coverImage->image_path ?? '' }}' }">
+                                @php
+                                    // รวมรูปภาพจาก 2 แหล่ง: ตาราง products (JSON column) และตาราง product_images (relationship)
+                                    $gallery = collect();
+
+                                    // 1. จาก JSON column ใน products
+                                    if (is_array($product->images)) {
+                                        foreach($product->images as $img) {
+                                            $gallery->push($img);
+                                        }
+                                    }
+
+                                    // 2. จากตาราง product_images
+                                    foreach($product->product_images as $img) {
+                                        $gallery->push($img->image_path);
+                                    }
+
+                                    // ลบค่าที่ซ้ำกันและจัดระเบียบใหม่
+                                    $gallery = $gallery->filter()->unique()->values();
+
+                                    // กำหนดรูปเปิดหน้าแรก (ถ้ามีรูปจาก product_images ที่เป็น is_primary ให้ใช้ก่อน)
+                                    $initialImage = $product->coverImage->image_path ?? $gallery->first() ?? '';
+                                @endphp
+
+                                <div class="md:w-1/2 p-4" x-data="{ activeImage: '{{ $initialImage }}' }">
                                     <div class="h-96 bg-gray-200 rounded-lg overflow-hidden mb-4 flex items-center justify-center">
-                                        <img :src="activeImage" class="h-full object-contain">
+                                        <template x-if="activeImage">
+                                            <img :src="activeImage" class="h-full object-contain">
+                                        </template>
+                                        <template x-if="!activeImage">
+                                            <div class="text-gray-400">ไม่มีรูปภาพ</div>
+                                        </template>
                                     </div>
                                     
-                                    <div class="flex gap-2 overflow-x-auto">
-                                        @foreach($product->images as $image)
-                                        <button @click="activeImage = '{{ $image->image_path }}'" 
-                                                class="w-20 h-20 border-2 rounded-md overflow-hidden hover:border-indigo-500 transition focus:outline-none"
-                                                :class="activeImage === '{{ $image->image_path }}' ? 'border-indigo-500' : 'border-gray-200'">
-                                            <img src="{{ $image->image_path }}" class="w-full h-full object-cover">
+                                    <div class="flex gap-2 overflow-x-auto pb-2">
+                                        @foreach($gallery as $imgUrl)
+                                        <button @click="activeImage = '{{ $imgUrl }}'" 
+                                                class="w-20 h-20 border-2 rounded-md overflow-hidden hover:border-indigo-500 transition focus:outline-none flex-shrink-0"
+                                                :class="activeImage === '{{ $imgUrl }}' ? 'border-indigo-500' : 'border-gray-200'">
+                                            <img src="{{ $imgUrl }}" class="w-full h-full object-cover">
                                         </button>
                                         @endforeach
                                     </div>

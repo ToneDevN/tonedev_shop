@@ -46,6 +46,8 @@ class AuthController extends Controller
                 'last_name' => $user->last_name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'avatar' => $user->avatar,
+                'image' => $user->image,
             ],
         ])->cookie('jwt_token', $token, config('jwt.ttl'), '/', null, false, true);
     }
@@ -102,6 +104,8 @@ class AuthController extends Controller
                 'last_name' => $user->last_name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'avatar' => $user->avatar,
+                'image' => $user->image,
             ],
         ], 201)->cookie('jwt_token', $token, config('jwt.ttl'), '/', null, false, true);
     }
@@ -134,6 +138,8 @@ class AuthController extends Controller
                 'phone_number' => $user->phone_number,
                 'birth_date' => $user->birth_date,
                 'role' => $user->role,
+                'avatar' => $user->avatar,
+                'image' => $user->image,
             ],
         ]);
     }

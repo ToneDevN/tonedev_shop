@@ -12,13 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->encryptCookies(except: [
+            'jwt_token',
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\OptionalJwtAuth::class,
         ]);
 
         $middleware->alias([
-            'jwt.auth' => \App\Http\Middleware\JwtAuth::class,
-            'role' => \App\Http\Middleware\CheckRole::class,
+            'auth.required' => \App\Http\Middleware\JwtAuth::class,
+            'role'          => \App\Http\Middleware\CheckRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

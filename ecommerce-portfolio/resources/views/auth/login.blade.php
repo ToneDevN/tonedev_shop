@@ -66,7 +66,7 @@ function loginForm() {
     return {
         form: { email: '', password: '' },
         errors: {},
-        globalError: '',
+        globalError: @json(session('error', '')),
         loading: false,
 
         async submit() {
@@ -79,7 +79,11 @@ function loginForm() {
                 if (res.data.success) {
                     localStorage.setItem('jwt_token', res.data.token);
                     localStorage.setItem('user', JSON.stringify(res.data.user));
-                    window.location.href = '/';
+
+                    // กลับไปยังหน้าที่ต้องการก่อนหน้า หรือ homepage
+                    const params  = new URLSearchParams(window.location.search);
+                    const redirect = params.get('redirect');
+                    window.location.href = redirect && redirect.startsWith('/') ? redirect : '/';
                 }
             } catch (e) {
                 if (e.response?.status === 422) {

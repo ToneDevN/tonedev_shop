@@ -13,6 +13,7 @@ class Product extends Model
 
     protected $casts = [
         'content_blocks' => 'array', // แปลง JSON เป็น Array อัตโนมัติ
+        'images' => 'array', // แปลง JSON Images ชุดใหม่เป็น Array
         'is_active' => 'boolean',
     ];
 
@@ -22,8 +23,8 @@ class Product extends Model
         return $this->belongsToMany(Category::class);
     }
 
-    // 1 สินค้า มีหลายรูป (One-to-Many)
-    public function images()
+    // 1 สินค้า มีหลายรูป (One-to-Many จากตาราง product_images)
+    public function product_images()
     {
         return $this->hasMany(ProductImage::class)->orderBy('sort_order');
     }

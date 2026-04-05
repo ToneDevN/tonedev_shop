@@ -7,17 +7,26 @@ use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::where('is_active', true)
+        $search = $request->input('search');
+
+        $query = Product::where('is_active', true)
             ->select(['id', 'slug', 'name', 'description', 'price', 'is_active', 'created_at', 'updated_at'])
             ->with([
                 'coverImage:id,product_id,image_path,is_primary',
                 'categories:id,name',
-            ])
-            ->latest()
+            ]);
+
+        if ($search) {
+            $query->where('name', 'ILIKE', "%{$search}%");
+        }
+
+        $products = $query->latest()
             ->paginate(12);
 
-        return view('home', compact('products'));
+        $categories = \App\Models\Category::whereDoesntHave('ancestors')->take(16)->get();
+
+        return view('home', compact('products', 'categories', 'search'));
     }
 }

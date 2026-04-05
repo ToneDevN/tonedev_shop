@@ -12,11 +12,15 @@ class User extends Authenticatable implements JWTSubject
     use HasFactory, Notifiable;
 
     protected $fillable = [
+        'username',
         'first_name',
         'last_name',
+        'gender',
         'birth_date',
         'email',
         'phone_number',
+        'avatar',
+        'image',
         'password',
         'role',
     ];
@@ -67,5 +71,10 @@ class User extends Authenticatable implements JWTSubject
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
     }
 }
