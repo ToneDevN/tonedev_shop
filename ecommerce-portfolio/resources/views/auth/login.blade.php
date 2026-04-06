@@ -77,13 +77,24 @@ function loginForm() {
             try {
                 const res = await axios.post('/api/auth/login', this.form);
                 if (res.data.success) {
+                    const user = res.data.user;
                     localStorage.setItem('jwt_token', res.data.token);
-                    localStorage.setItem('user', JSON.stringify(res.data.user));
+                    localStorage.setItem('user', JSON.stringify(user));
 
-                    // กลับไปยังหน้าที่ต้องการก่อนหน้า หรือ homepage
+                    // Redirect ตาม role
                     const params  = new URLSearchParams(window.location.search);
-                    const redirect = params.get('redirect');
-                    window.location.href = redirect && redirect.startsWith('/') ? redirect : '/';
+                    const intended = params.get('redirect');
+
+                    let destination = '/';
+                    if (intended && intended.startsWith('/')) {
+                        destination = intended;
+                    } else if (user.role === 'admin') {
+                        destination = '/admin';
+                    } else if (user.role === 'owner') {
+                        destination = '/owner';
+                    }
+
+                    window.location.href = destination;
                 }
             } catch (e) {
                 if (e.response?.status === 422) {

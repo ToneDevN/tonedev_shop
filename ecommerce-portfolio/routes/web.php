@@ -10,6 +10,11 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Owner\OrderController as OwnerOrderController;
 use App\Http\Controllers\Owner\DashboardController as OwnerDashboardController;
 use App\Http\Controllers\Owner\ProductController as OwnerProductController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 
 // หน้าแรกและหน้ารายละเอียดสินค้า
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -34,10 +39,35 @@ Route::post('/track-order', [App\Http\Controllers\OrderController::class, 'track
 // Owner Routes
 Route::prefix('owner')->name('owner.')->middleware(['auth.required', 'role:owner,admin'])->group(function () {
     Route::get('/', [OwnerDashboardController::class, 'index'])->name('dashboard');
-    Route::post('/products/create', [OwnerProductController::class,'create'])->name('products.create');
+    Route::post('/products/create', [OwnerProductController::class, 'create'])->name('products.create');
     Route::get('/orders', [OwnerOrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OwnerOrderController::class, 'show'])->name('orders.show');
     Route::patch('/orders/{order}/status', [OwnerOrderController::class, 'updateStatus'])->name('orders.updateStatus');
+});
+
+// Admin Routes (admin only)
+Route::prefix('admin')->name('admin.')->middleware(['auth.required', 'role:admin'])->group(function () {
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // Orders
+    Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+    Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
+
+    // Products
+    Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
+    Route::get('/products/{product}', [AdminProductController::class, 'show'])->name('products.show');
+    Route::patch('/products/{product}/toggle', [AdminProductController::class, 'toggleActive'])->name('products.toggle');
+    Route::delete('/products/{product}', [AdminProductController::class, 'destroy'])->name('products.destroy');
+
+    // Users
+    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
+    Route::patch('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.updateRole');
+    Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+
+    // Categories
+    Route::get('/categories', [AdminCategoryController::class, 'index'])->name('categories.index');
 });
 
 Route::get('/dashboard', function () {

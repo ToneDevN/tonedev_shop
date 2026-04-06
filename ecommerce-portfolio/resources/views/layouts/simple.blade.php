@@ -6,9 +6,24 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Tonedev Shop</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('tonedev_logo.svg') }}">
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Mitr:wght@200;300;400;500;600;700&family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <style>
+        [x-cloak] { display: none !important; }
+
+        .sidebar-link { @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 text-slate-500 hover:text-slate-900; }
+        .sidebar-link:hover { @apply bg-slate-100; }
+        
+        /* Active States */
+        .active-admin { @apply bg-rose-50 text-rose-600 font-bold border-r-4 border-rose-500 rounded-r-none; }
+        .active-owner { @apply bg-indigo-50 text-indigo-600 font-bold border-r-4 border-indigo-500 rounded-r-none; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { @apply bg-slate-200 rounded-full; }
+    </style>
 </head>
 <body class="bg-slate-50 antialiased min-h-screen font-sans">
 
