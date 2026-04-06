@@ -7,15 +7,26 @@ use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // ดึงสินค้าที่ Active ล่าสุด 12 ชิ้น
-        // with('coverImage') คือการ Eager Loading เพื่อลด Query (สำคัญมากสำหรับ Portfolio)
-        $products = Product::where('is_active', true)
-                           ->with('coverImage', 'categories') 
-                           ->latest()
-                           ->paginate(12);
+        $search = $request->input('search');
 
-        return view('home', compact('products'));
+        $query = Product::where('is_active', true)
+            ->select(['id', 'slug', 'name', 'description', 'price', 'is_active', 'created_at', 'updated_at'])
+            ->with([
+                'coverImage:id,product_id,image_path,is_primary',
+                'categories:id,name',
+            ]);
+
+        if ($search) {
+            $query->where('name', 'ILIKE', "%{$search}%");
+        }
+
+        $products = $query->latest()
+            ->paginate(12);
+
+        $categories = \App\Models\Category::whereDoesntHave('ancestors')->take(16)->get();
+
+        return view('home', compact('products', 'categories', 'search'));
     }
 }

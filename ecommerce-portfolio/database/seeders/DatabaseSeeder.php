@@ -27,28 +27,7 @@ class DatabaseSeeder extends Seeder
         //     'password' => bcrypt('password'),
         // ]);
 
-        // 3. สร้างหมวดหมู่ (Categories)
-        $categories = ['Electronics', 'Clothing', 'Books', 'Home & Garden'];
-        foreach ($categories as $cat) {
-            Category::create(['name' => $cat, 'slug' => \Str::slug($cat)]);
-        }
-
-        // 4. สร้างสินค้า (Products) และจับคู่หมวดหมู่
-        $cats = Category::all();
-        
-        Product::factory(10)->create()->each(function ($product) use ($cats) {
-            // สุ่มจับคู่หมวดหมู่
-            $product->categories()->attach($cats->random(rand(1, 2))->pluck('id'));
-
-            // สร้างรูปภาพจำลอง 3 รูป
-            for ($i = 0; $i < 3; $i++) {
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'image_path' => 'https://picsum.photos/400/300?random=' . rand(1, 1000), // รูปสุ่มจากเน็ต
-                    'is_primary' => $i === 0, // รูปแรกเป็นรูปปก
-                    'sort_order' => $i
-                ]);
-            }
-        });
+        // 3. สร้างหมวดหมู่และสินค้าจริง (สินค้าผู้ชาย, สตรี, เด็ก, สัตว์เลี้ยง, คอมพิวเตอร์, โทรศัพท์, บ้าน, อิเล็กทรอนิกส์)
+        $this->call(ProductCategorySeeder::class);
     }
 }

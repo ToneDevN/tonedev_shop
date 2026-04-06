@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     image: digitalocean.com/php
     container_name: app
+    ports:
+      - "5173:5173"
     restart: unless-stopped
     tty: true
     environment:
@@ -26,19 +28,7 @@ services:
       - app-network
     depends_on:
       - db
-
-  vite:
-    image: node:22-alpine
-    container_name: laravel_vite
-    working_dir: /var/www
-    ports:
-      - "5173:5173"
-    volumes:
-      - .:/var/www
-    command: sh -c "npm install && npm run dev"
-    networks:
-      - app-network
-
+      
   # Nginx Service
   webserver:
     image: nginx:alpine
@@ -52,6 +42,8 @@ services:
       - ./nginx/conf.d/:/etc/nginx/conf.d/
     networks:
       - app-network
+    depends_on:
+      - app # บังคับให้เริ่ม app ก่อน nginx
 
   # Postgres Database Service
   db:
@@ -63,7 +55,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
     networks:

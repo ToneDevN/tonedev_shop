@@ -17,6 +17,7 @@ RUN apk add --no-cache \
     libzip-dev \
     jpeg-dev \
     freetype-dev \
+    libwebp-dev \
     nodejs \
     npm
 
@@ -24,6 +25,7 @@ RUN apk add --no-cache \
 RUN docker-php-ext-configure gd \
         --with-freetype \
         --with-jpeg \
+        --with-webp \
     && docker-php-ext-install -j$(nproc) \
         mbstring zip exif pcntl \
         pdo pdo_pgsql gd
@@ -62,7 +64,10 @@ RUN apk add --no-cache \
     libzip \
     freetype \
     libjpeg-turbo \
-    bash
+    libwebp \
+    bash \
+    nodejs \
+    npm
 
 # Copy PHP extensions compiled in builder stage
 COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
@@ -80,6 +85,11 @@ RUN sed -i 's/^user =/;user =/' /usr/local/etc/php-fpm.d/www.conf && \
     sed -i 's/^group =/;group =/' /usr/local/etc/php-fpm.d/www.conf
 
 USER www-data
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 63af9fdb7cfa5d5643760009ee6bb89d7c7d772c
 EXPOSE 9000
 
 ENTRYPOINT ["entrypoint.sh"]
