@@ -10,7 +10,7 @@
         <a href="{{ route('home') }}" class="text-gray-500 hover:text-gray-700 font-medium">← ยกเลิก</a>
     </div>
 
-    <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" 
+    <form action="{{ route('owner.products.store') }}" method="POST" enctype="multipart/form-data"
           class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         @csrf
 

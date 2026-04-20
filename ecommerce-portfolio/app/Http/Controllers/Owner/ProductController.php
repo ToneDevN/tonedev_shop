@@ -1,62 +1,66 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Product;
+use App\Http\Requests\Owner\StoreProductRequest;
 use App\Models\Category;
+use App\Models\Product;
+use App\Services\CurrencyFormatter;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function store(Request $request)
+    public function create(): View
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric',
-            'categories' => 'required|array', // ต้องเลือกอย่างน้อย 1 หมวด
-            'content_blocks' => 'nullable|array',
-            'image' => 'required|image|max:2048',
-        ]);
+        $categories = Category::orderBy('name')->get();
 
+        return view('owner.products.create', compact('categories'));
+    }
+
+    public function store(StoreProductRequest $request): RedirectResponse
+    {
         DB::beginTransaction();
+
         try {
-            // 1. สร้าง Product
             $product = Product::create([
                 'name' => $request->name,
-                'slug' => \Str::slug($request->name . '-' . time()),
-                'price' => $request->price,
+                'slug' => Str::slug($request->name.'-'.time()),
+                'price' => CurrencyFormatter::toSatang($request->price),
                 'description' => $request->description,
-                'content_blocks' => $request->content_blocks, // บันทึกเป็น JSONB อัตโนมัติ (เพราะเราทำ Casts ไว้แล้ว)
+                'content_blocks' => $request->content_blocks,
                 'stock_quantity' => $request->stock_quantity ?? 0,
                 'is_active' => true,
             ]);
 
-            // 2. ผูกหมวดหมู่ (Relationship)
             $product->categories()->attach($request->categories);
 
-            // 3. บันทึกรูปภาพ
             if ($request->hasFile('image')) {
                 $path = $request->file('image')->store('products', 'public');
+<<<<<<< Updated upstream
                 $product->product_images()->create([
                     'image_path' => '/storage/' . $path,
+=======
+                $product->images()->create([
+                    'image_path' => '/storage/'.$path,
+>>>>>>> Stashed changes
                     'is_primary' => true,
+                    'sort_order' => 0,
                 ]);
             }
 
             DB::commit();
-            return redirect()->route('home')->with('success', 'สร้างสินค้าพร้อมรายละเอียดครบถ้วน!');
 
+            return redirect()->route('owner.dashboard')->with('success', 'สร้างสินค้าเรียบร้อยแล้ว');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
-        }
-    }
 
-    public function create()
-    {
-        $categories = Category::all(); // ดึงหมวดหมู่ทั้งหมด
-        return view('owner.products.create', compact('categories'));
+            return back()->with('error', 'เกิดข้อผิดพลาด: '.$e->getMessage());
+        }
     }
 }

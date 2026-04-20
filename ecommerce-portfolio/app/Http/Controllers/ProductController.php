@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
@@ -58,4 +57,4 @@ class ProductController extends Controller
         // ส่งข้อมูลไปยัง View
         return view('products.show', compact('product'));
     }
-}  
+}

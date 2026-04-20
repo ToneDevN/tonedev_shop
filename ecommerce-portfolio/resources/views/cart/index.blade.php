@@ -22,9 +22,9 @@
                                 <img src="{{ $details['image'] }}" class="w-16 h-16 object-cover rounded mr-4">
                                 <span class="font-medium">{{ $details['name'] ?? 'ไม่มีชื่อสินค้า' }}</span>
                             </td>
-                            <td class="p-4">฿{{ number_format($details['price'], 2) }}</td>
+                            <td class="p-4">@currency($details['price'])</td>
                             <td class="p-4">{{ $details['quantity'] }}</td>
-                            <td class="p-4">฿{{ number_format($details['price'] * $details['quantity'], 2) }}</td>
+                            <td class="p-4">@currency($details['price'] * $details['quantity'])</td>
                             <td class="p-4">
                                 <form action="{{ route('cart.remove', $id) }}" method="POST">
                                     @csrf @method('DELETE')
@@ -37,7 +37,7 @@
                 </table>
                 
                 <div class="p-6 bg-gray-50 flex justify-between items-center">
-                    <div class="text-2xl font-bold text-gray-800">ราคารวมทั้งหมด: ฿{{ number_format($total, 2) }}</div>
+                    <div class="text-2xl font-bold text-gray-800">ราคารวมทั้งหมด: @currency($total)</div>
                     <a href={{ route('checkout.index') }} class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-indigo-700 transition">
                         ไปหน้าชำระเงิน (Checkout) →
                     </a>

@@ -1,43 +1,82 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
-    protected $guarded = []; // อนุญาตให้ใส่ข้อมูลได้ทุกช่อง (เพื่อความเร็วในการ Dev)
+    protected $guarded = [];
 
     protected $casts = [
-        'content_blocks' => 'array', // แปลง JSON เป็น Array อัตโนมัติ
-        'images' => 'array', // แปลง JSON Images ชุดใหม่เป็น Array
+        'content_blocks' => 'array',
+        'images' => 'array',
         'is_active' => 'boolean',
+        'price' => 'integer',
+        'stock_quantity' => 'integer',
     ];
 
-    // 1 สินค้า มีหลายหมวดหมู่ (Many-to-Many)
-    public function categories()
+    // ─── Relationships ────────────────────────────────────────────────────────
+
+    public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class);
     }
 
-    // 1 สินค้า มีหลายรูป (One-to-Many จากตาราง product_images)
-    public function product_images()
+    public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('sort_order');
     }
-    
-    // ดึงเฉพาะรูปปก
-    public function coverImage()
+
+    public function product_images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+    }
+
+    public function coverImage(): HasOne
     {
         return $this->hasOne(ProductImage::class)->where('is_primary', true);
     }
 
-    // 1 สินค้า มีหลายรีวิว
-    public function reviews()
+    public function reviews(): HasMany
     {
-        return $this->hasMany(Review::class)->whereNull('parent_id'); // ดึงเฉพาะรีวิวหลัก
+        return $this->hasMany(Review::class)
+            ->whereNull('parent_id')
+            ->where('is_banned', false);
+    }
+
+    // ─── Scopes ───────────────────────────────────────────────────────────────
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeSearch(Builder $query, string $term): Builder
+    {
+        return $query->where(function (Builder $q) use ($term): void {
+            $q->where('name', 'ilike', "%{$term}%")
+                ->orWhere('description', 'ilike', "%{$term}%");
+        });
+    }
+
+    public function scopeInCategory(Builder $query, int|string $categoryId): Builder
+    {
+        return $query->whereHas('categories', fn (Builder $q) => $q->where('categories.id', $categoryId));
+    }
+
+    public function scopePriceBetween(Builder $query, int $min, int $max): Builder
+    {
+        return $query->whereBetween('price', [$min, $max]);
     }
 }

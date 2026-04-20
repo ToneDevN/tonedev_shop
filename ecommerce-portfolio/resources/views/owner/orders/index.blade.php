@@ -21,12 +21,12 @@
             <tbody>
                 @foreach($orders as $order)
                 <tr class="border-b hover:bg-gray-50 transition">
-                    <td class="p-4 font-mono text-sm text-indigo-600 font-bold">{{ $order->order_number }}</td>
+                    <td class="p-4 font-mono text-sm text-indigo-600 font-bold">{{ $order->id }}</td>
                     <td class="p-4 text-gray-700">
                         <div class="font-medium">{{ $order->customer_name }}</div>
                         <div class="text-xs text-gray-500">{{ $order->phone }}</div>
                     </td>
-                    <td class="p-4 font-bold text-gray-900">฿{{ number_format($order->total_amount, 2) }}</td>
+                    <td class="p-4 font-bold text-gray-900">@currency($order->total_amount)</td>
                     <td class="p-4">
                         <span class="px-3 py-1 rounded-full text-xs font-semibold 
                             {{ $order->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700' }}">
@@ -35,7 +35,7 @@
                     </td>
                     <td class="p-4 text-sm text-gray-500">{{ $order->created_at->format('d/m/Y H:i') }}</td>
                     <td class="p-4 text-right">
-                        <a href="{{ route('admin.orders.show', $order) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">รายละเอียด</a>
+                        <a href="{{ route('owner.orders.show', $order) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">รายละเอียด</a>
                     </td>
                 </tr>
                 @endforeach

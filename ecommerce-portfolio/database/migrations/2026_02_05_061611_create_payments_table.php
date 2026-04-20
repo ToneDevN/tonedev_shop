@@ -6,27 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->string('order_id');
-            $table->string('payment_method'); // เช่น transfer, credit_card
-            $table->decimal('amount', 10, 2);
-            $table->string('status')->default('pending'); // pending, completed, failed
+            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            $table->string('payment_method')->default('transfer'); // transfer, cod, qr_code
+            $table->unsignedBigInteger('amount'); // stored in satang
+            $table->string('status')->default('pending'); // pending, paid, failed, refunded
+            $table->string('slip_path')->nullable(); // uploaded payment slip image
             $table->string('transaction_id')->nullable();
-            $table->timestamp('paid_at');
+            $table->timestamp('paid_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('payments');
