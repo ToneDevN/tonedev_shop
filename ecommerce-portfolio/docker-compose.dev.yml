@@ -15,39 +15,64 @@ services:
       APP_ENV: local
       APP_DEBUG: "true"
       APP_URL: http://localhost:8000
+    working_dir: /var/www
     volumes:
-      - .:/var/www/html
-      - /var/www/html/vendor
+      - .:/var/www
+      - /var/www/vendor
+      - /var/www/node_modules
     ports:
-      - "8000:80"
+      - "8000:9000"
     networks:
-      - ecommerce_dev_net
-    # Override standard entrypoint to run migrations automatically in dev
-    command: ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+      - app-network
+    depends_on:
+      - db
 
-  # Container to install PHP dependencies locally
-  composer:
-    image: composer:2.8
-    container_name: ecommerce_composer_dev
+  webserver:
+    image: nginx:alpine
+    container_name: ecommerce_webserver_dev
+    restart: unless-stopped
+    ports:
+      - "8080:80"
     volumes:
-      - .:/app
-    command: install --ignore-platform-reqs
+      - .:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - app-network
+    depends_on:
+      - app
 
-  # Container for frontend development
+  db:
+    image: postgres:15-alpine
+    container_name: ecommerce_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-ecommerce}
+      POSTGRES_USER: ${DB_USERNAME:-laravel}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    networks:
+      - app-network
+
   node:
     image: node:20-alpine
     container_name: ecommerce_node_dev
-    working_dir: /var/www/html
+    working_dir: /var/www
     volumes:
-      - .:/var/www/html
+      - .:/var/www
     ports:
       - "5173:5173"
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     environment:
       CHOKIDAR_USEPOLLING: "true"
     networks:
-      - ecommerce_dev_net
+      - app-network
 
 networks:
-  ecommerce_dev_net:
+  app-network:
     driver: bridge
+
+volumes:
+  postgres_data_dev:
