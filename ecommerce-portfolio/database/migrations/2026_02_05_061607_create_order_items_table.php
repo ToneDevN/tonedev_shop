@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
             $table->foreignId('product_id')->constrained();
             $table->integer('quantity');
-            $table->decimal('price', 10, 2); // เก็บราคาสินค้า ณ วันที่ซื้อ (ป้องกันราคาเปลี่ยนภายหลัง)
+            $table->unsignedBigInteger('price'); // price snapshot in satang at purchase time
             $table->timestamps();
             $table->softDeletes();
         });

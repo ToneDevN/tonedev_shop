@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('customer_name');
             $table->string('phone');
             $table->enum('status', ['pending', 'paid', 'shipped', 'completed', 'cancelled'])->default('pending');
-            $table->decimal('total_amount', 10, 2);
+            $table->unsignedBigInteger('total_amount'); // stored in satang
             $table->string('tracking_number')->nullable();
             $table->text('shipping_address'); // Snapshot ที่อยู่ (สำคัญมาก)
             $table->timestamps();

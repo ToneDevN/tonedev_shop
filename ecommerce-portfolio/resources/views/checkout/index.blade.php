@@ -72,7 +72,7 @@
                                 <p class="text-xs text-gray-500">จำนวน: {{ $details['quantity'] }}</p>
                             </div>
                         </div>
-                        <p class="text-sm font-bold">฿{{ number_format($details['price'] * $details['quantity'], 2) }}</p>
+                        <p class="text-sm font-bold">@currency($details['price'] * $details['quantity'])</p>
                     </div>
                     @endforeach
                 </div>
@@ -80,7 +80,7 @@
                 <div class="space-y-3 border-t pt-6">
                     <div class="flex justify-between text-gray-600">
                         <span>ราคารวมสินค้า</span>
-                        <span>฿{{ number_format($total, 2) }}</span>
+                        <span>@currency($total)</span>
                     </div>
                     <div class="flex justify-between text-gray-600">
                         <span>ค่าจัดส่ง</span>
@@ -88,7 +88,7 @@
                     </div>
                     <div class="flex justify-between text-xl font-extrabold text-gray-900 pt-3 border-t">
                         <span>ยอดรวมทั้งสิ้น</span>
-                        <span class="text-indigo-600">฿{{ number_format($total, 2) }}</span>
+                        <span class="text-indigo-600">@currency($total)</span>
                     </div>
                 </div>
 

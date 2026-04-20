@@ -1,162 +1,185 @@
 @extends('layouts.simple')
 
-
 @section('content')
-    <div class="max-w-5xl mx-auto px-4">
-                {{-- ... โค้ดอื่นๆ ... --}}
-                <!DOCTYPE html>
-                <html lang="th">
-                <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <title>{{ $product->name }} - ShopPortfolio</title>
-                    @vite(['resources/css/app.css', 'resources/js/app.js'])
-                    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-                </head>
-                <body class="bg-gray-100 font-sans antialiased">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 pt-8">
 
-                    <nav class="bg-white shadow mb-8">
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
-                            <a href="/" class="text-indigo-600 font-bold text-xl">← Back to Shop</a>
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+
+        {{-- Product main section --}}
+        <div class="md:flex">
+
+            {{-- Image Gallery --}}
+            <div class="md:w-1/2 p-6" x-data="{ activeImage: '{{ $product->coverImage?->image_path ?? '' }}' }">
+                <div class="h-96 bg-gray-100 rounded-xl overflow-hidden mb-4 flex items-center justify-center">
+                    @if($product->coverImage)
+                        <img :src="activeImage" alt="{{ $product->name }}" class="h-full w-full object-contain">
+                    @else
+                        <div class="text-gray-400">ไม่มีรูปภาพ</div>
+                    @endif
+                </div>
+
+                @php
+                    $gallery = collect();
+                    if (is_array($product->images)) {
+                        foreach($product->images as $img) { $gallery->push($img); }
+                    }
+                    foreach($product->product_images as $img) {
+                        $gallery->push($img->image_path);
+                    }
+                    $gallery = $gallery->filter()->unique()->values();
+                @endphp
+
+                @if($gallery->count() > 0)
+                <div class="flex gap-2 overflow-x-auto pb-1">
+                    @foreach($gallery as $imgUrl)
+                    <button
+                        @click="activeImage = '{{ $imgUrl }}'"
+                        class="w-20 h-20 shrink-0 border-2 rounded-lg overflow-hidden hover:border-indigo-500 transition focus:outline-none"
+                        :class="activeImage === '{{ $imgUrl }}' ? 'border-indigo-500' : 'border-gray-200'"
+                    >
+                        <img src="{{ $imgUrl }}" class="w-full h-full object-cover">
+                    </button>
+                    @endforeach
+                </div>
+                @endif
+            </div>
+
+            {{-- Product Info --}}
+            <div class="md:w-1/2 p-8 flex flex-col">
+                <div class="flex flex-wrap gap-1 mb-3">
+                    @foreach($product->categories as $cat)
+                        <span class="bg-indigo-50 text-indigo-600 text-xs font-semibold px-2.5 py-1 rounded-full">{{ $cat->name }}</span>
+                    @endforeach
+                </div>
+
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $product->name }}</h1>
+                <div class="text-4xl font-extrabold text-indigo-600 mb-4">@currency($product->price)</div>
+                <p class="text-gray-500 mb-6">{{ $product->description }}</p>
+
+                <div class="mb-3">
+                    @if($product->stock_quantity > 0)
+                        <span class="inline-flex items-center gap-1 text-green-600 text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            มีสินค้า ({{ $product->stock_quantity }} ชิ้น)
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1 text-red-500 text-sm font-medium">
+                            สินค้าหมด
+                        </span>
+                    @endif
+                </div>
+
+                <form action="{{ route('cart.add', $product) }}" method="POST" class="mt-auto">
+                    @csrf
+                    <div class="flex items-center gap-3">
+                        <input type="number" name="quantity" min="1" max="{{ $product->stock_quantity }}"
+                            value="1"
+                            class="w-20 border border-gray-200 rounded-xl px-3 py-3 text-center focus:border-indigo-500 focus:ring-indigo-500">
+                        <button type="submit"
+                            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-sm shadow-indigo-200 hover:shadow-indigo-300 transition"
+                            @if($product->stock_quantity <= 0) disabled @endif>
+                            เพิ่มลงตะกร้า
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- Content Blocks --}}
+        @if(is_array($product->content_blocks) && count($product->content_blocks))
+        <div class="border-t border-gray-100 p-8">
+            <h3 class="text-2xl font-bold mb-6">รายละเอียดสินค้า</h3>
+            <div class="space-y-5 max-w-3xl">
+                @foreach($product->content_blocks as $block)
+                    @if(($block['type'] ?? '') === 'heading')
+                        <h4 class="text-xl font-bold text-gray-900">{{ $block['data'] }}</h4>
+                    @elseif(in_array($block['type'] ?? '', ['text', 'paragraph']))
+                        <p class="text-gray-700 leading-relaxed">{{ $block['data'] }}</p>
+                    @elseif(($block['type'] ?? '') === 'image')
+                        <img src="{{ $block['data'] }}" class="w-full rounded-xl shadow-sm" alt="">
+                    @endif
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- Reviews --}}
+        <div class="border-t border-gray-100 p-8 bg-gray-50">
+            <h3 class="text-2xl font-bold mb-6">รีวิวจากลูกค้า ({{ $product->reviews->count() }})</h3>
+
+            @auth
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+                <h4 class="font-semibold text-gray-800 mb-4">เขียนรีวิว</h4>
+                <form action="{{ route('reviews.store') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">คะแนน</label>
+                        <div x-data="{ rating: 0 }" class="flex gap-1">
+                            @for($i = 1; $i <= 5; $i++)
+                            <button type="button" @click="rating = {{ $i }}"
+                                class="text-3xl transition-transform hover:scale-110"
+                                :class="rating >= {{ $i }} ? 'text-yellow-400' : 'text-gray-300'">★</button>
+                            @endfor
+                            <input type="hidden" name="rating" :value="rating">
                         </div>
-                    </nav>
+                    </div>
 
-                    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-                        
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div class="md:flex">
-                                
-                                @php
-                                    // รวมรูปภาพจาก 2 แหล่ง: ตาราง products (JSON column) และตาราง product_images (relationship)
-                                    $gallery = collect();
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ความคิดเห็น</label>
+                        <textarea name="comment" rows="3" required
+                            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                            placeholder="แชร์ประสบการณ์การใช้งานสินค้านี้...">{{ old('comment') }}</textarea>
+                    </div>
 
-                                    // 1. จาก JSON column ใน products
-                                    if (is_array($product->images)) {
-                                        foreach($product->images as $img) {
-                                            $gallery->push($img);
-                                        }
-                                    }
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">รูปภาพ (ไม่บังคับ)</label>
+                        <input type="file" name="photo" accept="image/*"
+                            class="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
+                    </div>
 
-                                    // 2. จากตาราง product_images
-                                    foreach($product->product_images as $img) {
-                                        $gallery->push($img->image_path);
-                                    }
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition">
+                        ส่งรีวิว
+                    </button>
+                </form>
+            </div>
+            @else
+            <p class="text-sm text-gray-500 mb-6">
+                <a href="{{ route('login') }}" class="text-indigo-600 hover:underline font-medium">เข้าสู่ระบบ</a> เพื่อเขียนรีวิว
+            </p>
+            @endauth
 
-                                    // ลบค่าที่ซ้ำกันและจัดระเบียบใหม่
-                                    $gallery = $gallery->filter()->unique()->values();
+            <div class="space-y-4">
+                @forelse($product->reviews as $review)
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold text-gray-800">{{ $review->user->name }}</span>
+                        <span class="text-xs text-gray-400">{{ $review->created_at->diffForHumans() }}</span>
+                    </div>
+                    <div class="flex text-yellow-400 mb-2 text-lg">
+                        @for($i = 0; $i < 5; $i++)
+                            <span>{{ $i < $review->rating ? '★' : '☆' }}</span>
+                        @endfor
+                    </div>
+                    <p class="text-gray-700 text-sm">{{ $review->comment }}</p>
 
-                                    // กำหนดรูปเปิดหน้าแรก (ถ้ามีรูปจาก product_images ที่เป็น is_primary ให้ใช้ก่อน)
-                                    $initialImage = $product->coverImage->image_path ?? $gallery->first() ?? '';
-                                @endphp
+                    @if($review->photo_path)
+                        <img src="{{ $review->photo_path }}" class="mt-3 w-32 h-32 object-cover rounded-lg border border-gray-100" alt="review photo">
+                    @endif
 
-                                <div class="md:w-1/2 p-4" x-data="{ activeImage: '{{ $initialImage }}' }">
-                                    <div class="h-96 bg-gray-200 rounded-lg overflow-hidden mb-4 flex items-center justify-center">
-                                        <template x-if="activeImage">
-                                            <img :src="activeImage" class="h-full object-contain">
-                                        </template>
-                                        <template x-if="!activeImage">
-                                            <div class="text-gray-400">ไม่มีรูปภาพ</div>
-                                        </template>
-                                    </div>
-                                    
-                                    <div class="flex gap-2 overflow-x-auto pb-2">
-                                        @foreach($gallery as $imgUrl)
-                                        <button @click="activeImage = '{{ $imgUrl }}'" 
-                                                class="w-20 h-20 border-2 rounded-md overflow-hidden hover:border-indigo-500 transition focus:outline-none flex-shrink-0"
-                                                :class="activeImage === '{{ $imgUrl }}' ? 'border-indigo-500' : 'border-gray-200'">
-                                            <img src="{{ $imgUrl }}" class="w-full h-full object-cover">
-                                        </button>
-                                        @endforeach
-                                    </div>
-                                </div>
-
-                                <div class="md:w-1/2 p-8">
-                                    <div class="flex items-center text-sm text-gray-500 mb-2 space-x-2">
-                                        @foreach($product->categories as $cat)
-                                            <span class="bg-gray-200 px-2 py-1 rounded">{{ $cat->name }}</span>
-                                        @endforeach
-                                    </div>
-                                    
-                                    <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ $product->name }}</h1>
-                                    
-                                    <div class="text-4xl font-bold text-indigo-600 mb-6">฿{{ number_format($product->price, 2) }}</div>
-
-                                    <div class="prose max-w-none text-gray-600 mb-8">
-                                        {{ $product->description }} </div>
-
-                                    <form action="{{ route('cart.add', $product) }}" method="POST">
-                                        @csrf
-                                        <div class="flex items-center space-x-4">
-                                            <input type="number" name="quantity" min="1" value="1" class="w-20 border-gray-300 rounded-md">
-                                            <button type="submit" class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700">
-                                                เพิ่มลงตะกร้า
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-
-                            <div class="border-t border-gray-200 p-8">
-                                <h3 class="text-2xl font-bold mb-6">รายละเอียดสินค้า</h3>
-                                
-                                <div class="space-y-6 max-w-4xl mx-auto">
-                                    @if(is_array($product->content_blocks))
-                                        @if($product->content_blocks)
-                                            @foreach($product->content_blocks as $block)
-                                            
-                                                @if($block['type'] === 'text' || $block['type'] === 'paragraph')
-                                                    <p class="text-gray-700 leading-relaxed text-lg">{{ $block['data'] }}</p>
-                                                
-                                                @elseif($block['type'] === 'heading')
-                                                    <h4 class="text-xl font-bold text-gray-900 mt-4">{{ $block['data'] }}</h4>
-
-                                                @elseif($block['type'] === 'image')
-                                                    <img src="{{ $block['data'] }}" class="w-full rounded-lg shadow-sm my-4">
-
-                                                @endif
-
-                                            @endforeach
-                                        @else
-                                            <p class="text-gray-400 italic">ไม่มีรายละเอียดเพิ่มเติม</p>
-                                        @endif
-                                    @else
-                                        <p class="text-gray-400 italic">ไม่มีรายละเอียดเพิ่มเติม</p>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="border-t border-gray-200 p-8 bg-gray-50">
-                                <h3 class="text-2xl font-bold mb-6">รีวิวจากลูกค้า ({{ $product->reviews->count() }})</h3>
-                                <div class="space-y-4">
-                                    @forelse($product->reviews as $review)
-                                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <span class="font-semibold">{{ $review->user->full_name }}</span>
-                                            <span class="text-xs text-gray-500">{{ $review->created_at->diffForHumans() }}</span>
-                                        </div>
-                                        <div class="flex text-yellow-400 mb-2">
-                                            @for($i=0; $i<5; $i++)
-                                                <span>{{ $i < $review->rating ? '★' : '☆' }}</span>
-                                            @endfor
-                                        </div>
-                                        <p class="text-gray-700">{{ $review->comment }}</p>
-                                        
-                                        @if($review->replies && $review->replies->count() > 0)
-                                            <div class="ml-8 mt-4 p-3 bg-gray-100 rounded border-l-4 border-indigo-500">
-                                                <p class="text-sm font-bold text-indigo-600">ตอบกลับจากร้านค้า:</p>
-                                                <p class="text-sm text-gray-600">{{ $review->replies->first()->comment }}</p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    @empty
-                                        <p class="text-gray-500">ยังไม่มีรีวิว เป็นคนแรกเลยสิ!</p>
-                                    @endforelse
-                                </div>
-                            </div>
-
-                        </div>
-                    </main>
-                </body>
-                </html>
+                    @if($review->replies->isNotEmpty())
+                    <div class="ml-6 mt-4 p-4 bg-indigo-50 rounded-xl border-l-4 border-indigo-400">
+                        <p class="text-xs font-bold text-indigo-700 mb-1">ตอบกลับจากร้านค้า:</p>
+                        <p class="text-sm text-gray-700">{{ $review->replies->first()->comment }}</p>
+                    </div>
+                    @endif
+                </div>
+                @empty
+                <p class="text-gray-500 text-sm">ยังไม่มีรีวิว เป็นคนแรกเลยสิ!</p>
+                @endforelse
+            </div>
+        </div>
     </div>
+</div>
 @endsection

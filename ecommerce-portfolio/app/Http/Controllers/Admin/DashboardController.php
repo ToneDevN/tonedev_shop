@@ -12,7 +12,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $user = auth('api')->user();
+        $user = auth()->user();
 
         $totalRevenue   = Order::where('status', 'completed')->sum('total_amount');
         $totalOrders    = Order::count();

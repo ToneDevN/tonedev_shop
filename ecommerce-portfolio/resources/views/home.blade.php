@@ -42,7 +42,6 @@
             current: 0,
             total: 4,
             init() {
-                // อัตโนมัติเลื่อนภาพทุกๆ 5 วินาที
                 setInterval(() => {
                     this.next();
                 }, 5000);
@@ -98,9 +97,9 @@
                                             
                                             <div class="relative w-full h-full rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shadow-sm group-hover:border-indigo-200">
                                                 @if($category->image)
-                                                    <img src="{{ $category->image }}" loading="lazy" class="w-full h-full object-cover">
+                                                    <img src="{{ $category->image }}" class="w-full h-full object-cover">
                                                 @else
-                                                    <img src="https://picsum.photos/seed/cat-{{ $category->id }}/200/200" loading="lazy" class="w-full h-full object-cover">
+                                                    <img src="https://picsum.photos/seed/cat-{{ $category->id }}/200/200" class="w-full h-full object-cover">
                                                 @endif
                                             </div>
                                         </div>
@@ -128,71 +127,62 @@
             </table>
         </div>
 
-        <div class="mt-8 sm:hidden text-center">
-            <a href="#" class="inline-flex items-center justify-center px-6 py-3 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:bg-white hover:shadow-sm transition-all">
-                ดูหมวดหมู่ทั้งหมด
+        @if(request()->hasAny(['search', 'category', 'min_price', 'max_price']))
+            <a href="{{ route('home') }}" class="text-sm text-rose-500 hover:text-rose-700 font-medium flex items-center gap-1 ml-2">
+                ล้างตัวกรอง
             </a>
-        </div>
-    </div>
+        @endif
+    </form>
 </section>
 
 {{-- Products Section --}}
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
 
     <div class="flex items-center justify-between mb-8">
         <div>
-            <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900">สินค้ามาใหม่</h2>
-            <p class="text-gray-400 text-sm mt-1">อัปเดตทุกวัน รับประกันสินค้าแท้</p>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+                @if(request('search'))
+                    ผลการค้นหา: "{{ request('search') }}"
+                @else
+                    สินค้ามาใหม่
+                @endif
+            </h2>
+            <p class="text-gray-500 text-sm mt-1">อัปเดตชุดใหม่ล่าสุด รับประกันคุณภาพทุกชิ้น</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+    <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         @foreach($products as $product)
         <a href="{{ route('products.show', $product) }}" class="group block">
-            <div class="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
 
                 {{-- Image --}}
-                <div class="relative h-52 bg-gray-50 overflow-hidden">
+                <div class="relative aspect-square bg-gray-50 overflow-hidden">
                     @if($product->coverImage)
                         <img
                             src="{{ $product->coverImage->image_path }}"
                             alt="{{ $product->name }}"
                             loading="lazy"
-                            decoding="async"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         >
                     @else
-                        <div class="flex flex-col items-center justify-center h-full text-gray-300 gap-2">
+                        <div class="flex flex-col items-center justify-center h-full text-gray-300">
                             <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
-                            <span class="text-xs">ไม่มีรูปภาพ</span>
                         </div>
                     @endif
-
                 </div>
 
                 {{-- Info --}}
-                <div class="grid content-between p-2 h-[7rem]">
-                    <h3 class="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors">
-                        {{ $product->name }}
-                    </h3>
-
-                    <div class="">
-                        <div class="mt-2 flex items-center justify-between">
-                            <div>
-                                <span class="text-lg font-extrabold text-gray-900">฿{{ number_format($product->price, 0) }}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-1">
-                                <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                </svg>
-                                <span class="text-xs text-gray-500 font-medium">2</span>
-                            </div>
-                            <span class="text-xs text-gray-400">3k</span>
-                        </div>
+                <div class="p-3 flex-1 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                            {{ $product->name }}
+                        </h3>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                        <span class="text-lg font-extrabold text-indigo-600">@currency($product->price)</span>
                     </div>
                 </div>
             </div>
@@ -200,23 +190,18 @@
         @endforeach
     </div>
 
-    {{-- Empty State --}}
     @if($products->isEmpty())
-    <div class="text-center py-24 text-gray-400">
-        <svg class="w-16 h-16 mx-auto mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-        </svg>
-        <p class="text-lg font-medium">ยังไม่มีสินค้าในขณะนี้</p>
-        <p class="text-sm mt-1">กรุณากลับมาใหม่ในภายหลัง</p>
+    <div class="text-center py-24 text-gray-500 bg-white rounded-3xl border border-dashed border-gray-200">
+        <p class="text-lg font-medium">ไม่พบสินค้าที่ตรงกับการค้นหา</p>
+        <a href="{{ route('home') }}" class="text-indigo-600 mt-2 inline-block hover:underline">ดูสินค้าทั้งหมด</a>
     </div>
     @endif
 
-    {{-- Pagination --}}
-    <!-- @if($products->hasPages())
-    <div class="mt-10 flex justify-center">
+    @if($products->hasPages())
+    <div class="mt-12">
         {{ $products->links() }}
     </div>
-    @endif -->
+    @endif
 
 </section>
 @endsection

@@ -25,7 +25,10 @@ services:
     working_dir: /var/www
     volumes:
       - ./.env:/var/www/.env
+<<<<<<< HEAD
+=======
       - ./:/var/www
+>>>>>>> 63af9fdb7cfa5d5643760009ee6bb89d7c7d772c
       - laravel_storage:/var/www/storage
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
