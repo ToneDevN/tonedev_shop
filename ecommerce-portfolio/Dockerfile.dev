@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────
+# Development Dockerfile
+# ─────────────────────────────────────────────
+FROM php:8.3-fpm-alpine
+
+WORKDIR /var/www
+
+# Install development system dependencies (apk for Alpine)
+RUN apk add --no-cache \
+    bash \
+    curl \
+    git \
+    unzip \
+    libpng-dev \
+    libpq-dev \
+    oniguruma-dev \
+    libzip-dev \
+    jpeg-dev \
+    freetype-dev \
+    libwebp-dev \
+    nodejs \
+    npm \
+    shadow
+
+# Install PHP extensions
+RUN docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+        --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+        mbstring zip exif pcntl \
+        pdo pdo_pgsql gd
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Keep default www-data user/group to prevent FPM startup errors when running as root
+# RUN sed -i 's/^user =/;user =/' /usr/local/etc/php-fpm.d/www.conf && ...
+# Expose ports for PHP-FPM and Vite
+EXPOSE 9000
+EXPOSE 5173
+
+# Copy entrypoint
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# The main source code will be mounted as a volume in docker-compose.yml
+# dependencies can be installed actively with `docker-compose exec app composer install`
+# and `docker-compose exec app npm run dev`
+
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["php-fpm"]

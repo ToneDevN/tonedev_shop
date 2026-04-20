@@ -9,10 +9,10 @@
         {{-- Images Container --}}
         <div class="flex transition-transform duration-500 ease-out h-full" 
              :style="`transform: translateX(-${current * 100}%)`">
-            <img src="{{ asset('images/banner1.png') }}" alt="แบนเนอร์โปรโมชั่น 1" class="w-full h-full object-cover shrink-0">
-            <img src="{{ asset('images/banner2.png') }}" alt="แบนเนอร์โปรโมชั่น 2" class="w-full h-full object-cover shrink-0">
-            <img src="{{ asset('images/banner3.png') }}" alt="แบนเนอร์โปรโมชั่น 3" class="w-full h-full object-cover shrink-0">
-            <img src="{{ asset('images/banner4.png') }}" alt="แบนเนอร์โปรโมชั่น 4" class="w-full h-full object-cover shrink-0">
+            <img src="{{ asset('images/banner1.png') }}" loading="lazy" alt="แบนเนอร์โปรโมชั่น 1" class="w-full h-full object-cover shrink-0">
+            <img src="{{ asset('images/banner2.png') }}" loading="lazy" alt="แบนเนอร์โปรโมชั่น 2" class="w-full h-full object-cover shrink-0">
+            <img src="{{ asset('images/banner3.png') }}" loading="lazy" alt="แบนเนอร์โปรโมชั่น 3" class="w-full h-full object-cover shrink-0">
+            <img src="{{ asset('images/banner4.png') }}" loading="lazy" alt="แบนเนอร์โปรโมชั่น 4" class="w-full h-full object-cover shrink-0">
         </div>
 
         {{-- Prev Button --}}
@@ -98,9 +98,9 @@
                                             
                                             <div class="relative w-full h-full rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shadow-sm group-hover:border-indigo-200">
                                                 @if($category->image)
-                                                    <img src="{{ $category->image }}" class="w-full h-full object-cover">
+                                                    <img src="{{ $category->image }}" loading="lazy" class="w-full h-full object-cover">
                                                 @else
-                                                    <img src="https://picsum.photos/seed/cat-{{ $category->id }}/200/200" class="w-full h-full object-cover">
+                                                    <img src="https://picsum.photos/seed/cat-{{ $category->id }}/200/200" loading="lazy" class="w-full h-full object-cover">
                                                 @endif
                                             </div>
                                         </div>
